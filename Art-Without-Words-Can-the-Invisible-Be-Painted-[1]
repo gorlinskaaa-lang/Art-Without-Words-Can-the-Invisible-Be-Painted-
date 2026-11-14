@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Якого кольору твої почуття? — Мистецтво без слів</title>
+    
+    <!-- Підключення Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Підключення витончених кириличних шрифтів: Cormorant Garamond та Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* Базові налаштування типографіки та художнього полотна */
+        :root {
+            --paper-bg: #fcfaf6;
+            --ink-primary: #2d2a2e;
+            --ink-secondary: #5c5761;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--paper-bg);
+            color: var(--ink-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .font-serif-art {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+        }
+
+        /* Текстура акварельного художнього паперу на весь екран */
+        .paper-texture {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.45;
+            background-image: radial-gradient(circle at 20% 20%, rgba(255, 245, 238, 0.8) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 75%, rgba(242, 246, 252, 0.8) 0%, transparent 55%),
+                              radial-gradient(circle at 50% 45%, rgba(252, 248, 240, 0.9) 0%, transparent 70%);
+        }
+
+        /* Делікатна зернистість паперу через SVG-патерн */
+        .paper-grain {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.28;
+            mix-blend-mode: multiply;
+        }
+
+        /* Анімація живого «дихання» акварельних плям */
+        @keyframes watercolorBreathe {
+            0%, 100% {
+                transform: scale(1) rotate(0deg) translate(0px, 0px);
+            }
+            33% {
+                transform: scale(1.035) rotate(1.2deg) translate(2px, -4px);
+            }
+            66% {
+                transform: scale(0.985) rotate(-1deg) translate(-3px, 3px);
+            }
+        }
+
+        .watercolor-blot-btn {
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            outline: none;
+            position: relative;
+            transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), filter 0.65s ease;
+            animation: watercolorBreathe var(--breathe-duration, 9s) ease-in-out infinite;
+            animation-delay: var(--breathe-delay, 0s);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .watercolor-blot-btn:hover,
+        .watercolor-blot-btn:focus-visible {
+            transform: scale(1.08) !important;
+            filter: drop-shadow(0 14px 28px var(--blot-glow, rgba(0, 0, 0, 0.12))) saturate(1.12);
+            z-index: 15;
+        }
+
+        .watercolor-blot-btn:active {
+            transform: scale(0.98) !important;
+        }
+
+        /* Плавне з'явлення модальної картки */
+        .modal-backdrop {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.45s ease, visibility 0.45s ease;
+        }
+
+        .modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            transform: translateY(22px) scale(0.96);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+        }
+
+        .modal-backdrop.active .modal-card {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Тонка смуга прокрутки всередині картки на маленьких екранах */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(120, 113, 128, 0.2);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="selection:bg-amber-100 selection:text-stone-800">
+
+    <!-- Приховані SVG-фільтри для створення справжньої акварельної фактури з розтіканням країв та зерном паперу -->
+    <svg width="0" height="0" class="fixed pointer-events-none" aria-hidden="true">
+        <defs>
+            <!-- Текстура художнього паперу -->
+            <filter id="paper-noise" x="0%" y="0%" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" stitchTiles="stitch" result="noise"/>
+                <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.09 0" in="noise" result="coloredNoise"/>
+            </filter>
+
+            <!-- Акварельний фільтр №1: органічні розмиті краї та розтікання пігменту -->
+            <filter id="watercolor-edge-1" x="-25%" y="-25%" width="150%" height="150%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="4" seed="11" result="turbulence"/>
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="24" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+                <feGaussianBlur in="displaced" stdDeviation="3.2" result="blurred"/>
+                <feComposite in="blurred" in2="SourceGraphic" operator="over"/>
+            </filter>
+
+            <!-- Акварельний фільтр №2: інший seed для унікальності форм плям -->
+            <filter id="watercolor-edge-2" x="-25%" y="-25%" width="150%" height="150%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="5" seed="42" result="turbulence"/>
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="28" xChannelSelector="G" yChannelSelector="B" result="displaced"/>
+                <feGaussianBlur in="displaced" stdDeviation="3.6" result="blurred"/>
+            </filter>
+
+            <!-- Акварельний фільтр №3: м'який водяний контур -->
+            <filter id="watercolor-edge-3" x="-25%" y="-25%" width="150%" height="150%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.036" numOctaves="4" seed="87" result="turbulence"/>
+                <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="22" xChannelSelector="R" yChannelSelector="B" result="displaced"/>
+                <feGaussianBlur in="displaced" stdDeviation="3.4" result="blurred"/>
+            </filter>
+
+            <!-- Градієнти для 6 кольорів акварелі -->
+            <!-- 1. Рожевий -->
+            <radialGradient id="grad-pink-main" cx="42%" cy="38%" r="58%">
+                <stop offset="0%" stop-color="#ff9ebb" stop-opacity="0.72"/>
+                <stop offset="55%" stop-color="#f779a4" stop-opacity="0.56"/>
+                <stop offset="88%" stop-color="#f9b4c8" stop-opacity="0.34"/>
+                <stop offset="100%" stop-color="#ffd6e2" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="grad-pink-sub" cx="65%" cy="62%" r="50%">
+                <stop offset="0%" stop-color="#ff7597" stop-opacity="0.48"/>
+                <stop offset="70%" stop-color="#ffb3c6" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#ffe5ec" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- 2. Жовтий -->
+            <radialGradient id="grad-yellow-main" cx="45%" cy="42%" r="56%">
+                <stop offset="0%" stop-color="#ffe169" stop-opacity="0.78"/>
+                <stop offset="55%" stop-color="#fbc02d" stop-opacity="0.54"/>
+                <stop offset="88%" stop-color="#fff099" stop-opacity="0.34"/>
+                <stop offset="100%" stop-color="#fff9db" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="grad-yellow-sub" cx="30%" cy="65%" r="50%">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.38"/>
+                <stop offset="70%" stop-color="#fde047" stop-opacity="0.28"/>
+                <stop offset="100%" stop-color="#fef9c3" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- 3. Блакитний -->
+            <radialGradient id="grad-blue-main" cx="48%" cy="40%" r="58%">
+                <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.74"/>
+                <stop offset="55%" stop-color="#38bdf8" stop-opacity="0.52"/>
+                <stop offset="88%" stop-color="#bae6fd" stop-opacity="0.32"/>
+                <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="grad-blue-sub" cx="66%" cy="35%" r="48%">
+                <stop offset="0%" stop-color="#5eead4" stop-opacity="0.42"/>
+                <stop offset="70%" stop-color="#93c5fd" stop-opacity="0.26"/>
+                <stop offset="100%" stop-color="#dbeafe" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- 4. Зелений -->
+            <radialGradient id="grad-green-main" cx="44%" cy="46%" r="58%">
+                <stop offset="0%" stop-color="#86efac" stop-opacity="0.72"/>
+                <stop offset="55%" stop-color="#34d399" stop-opacity="0.50"/>
+                <stop offset="88%" stop-color="#bbf7d0" stop-opacity="0.32"/>
+                <stop offset="100%" stop-color="#dcfce7" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="grad-green-sub" cx="62%" cy="64%" r="50%">
+                <stop offset="0%" stop-color="#a3e635" stop-opacity="0.40"/>
+                <stop offset="70%" stop-color="#6ee7b7" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#ecfccb" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- 5. Фіолетовий -->
+            <radialGradient id="grad-purple-main" cx="46%" cy="42%" r="58%">
+                <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.76"/>
+                <stop offset="55%" stop-color="#8b5cf6" stop-opacity="0.52"/>
+                <stop offset="88%" stop-color="#ddd6fe" stop-opacity="0.34"/>
+                <stop offset="100%" stop-color="#ede9fe" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="grad-purple-sub" cx="32%" cy="34%" r="48%">
+                <stop offset="0%" stop-color="#a855f7" stop-opacity="0.42"/>
+                <stop offset="70%" stop-color="#e9d5ff" stop-opacity="0.26"/>
+                <stop offset="100%" stop-color="#f3e8ff" stop-opacity="0"/>
+            </radialGradient>
+
+            <!-- 6. Червоний -->
+            <radialGradient id="grad-red-main" cx="45%" cy="44%" r="58%">
+                <stop offset="0%" stop-color="#fda4af" stop-opacity="0.74"/>
+                <stop offset="55%" stop-color="#f43f5e" stop-opacity="0.54"/>
+                <stop offset="88%" stop-color="#fecdd3" stop-opacity="0.32"/>
+                <stop offset="100%" stop-color="#ffe4e6" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="grad-red-sub" cx="64%" cy="58%" r="50%">
+                <stop offset="0%" stop-color="#fb7185" stop-opacity="0.46"/>
+                <stop offset="70%" stop-color="#fdba74" stop-opacity="0.26"/>
+                <stop offset="100%" stop-color="#ffedd5" stop-opacity="0"/>
+            </radialGradient>
+        </defs>
+    </svg>
+
+    <!-- Фонові шари паперу -->
+    <div class="paper-texture"></div>
+    <svg class="paper-grain" width="100%" height="100%">
+        <rect width="100%" height="100%" filter="url(#paper-noise)"/>
+    </svg>
+
+    <!-- Основний контейнер сторінки -->
+    <div class="relative z-10 flex flex-col min-h-screen">
+        
+        <!-- 1. Ніжна мистецька шапка сайту -->
+        <header class="w-full border-b border-stone-200/60 bg-white/40 backdrop-blur-sm">
+            <div class="max-w-5xl mx-auto px-5 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+                <div class="flex items-center gap-3">
+                    <!-- Мініатюрний акварельний символ пензля/краплі -->
+                    <span class="inline-block w-3 h-3 rounded-full bg-gradient-to-tr from-rose-300 via-amber-200 to-sky-300 shadow-sm shrink-0"></span>
+                    <span class="font-serif-art text-lg sm:text-xl md:text-2xl font-semibold tracking-wide text-stone-800">
+                        Мистецтво без слів: <span class="italic font-normal text-stone-600">чи можна намалювати те, чого не видно?</span>
+                    </span>
+                </div>
+                <div class="text-xs uppercase tracking-[0.18em] text-stone-400 font-semibold shrink-0">
+                    Творча майстерня
+                </div>
+            </div>
+        </header>
+
+        <!-- Основна робоча область -->
+        <main class="flex-grow max-w-5xl w-full mx-auto px-5 sm:px-8 pt-8 sm:pt-12 pb-14 flex flex-col items-center">
+            
+            <!-- 2. Вступний блок вправи -->
+            <section class="max-w-2xl text-center mb-8 sm:mb-12">
+                <h1 class="font-serif-art text-4xl sm:text-5xl md:text-[3.25rem] font-semibold text-stone-800 leading-tight mb-4">
+                    «Якого кольору твої почуття?»
+                </h1>
+                <p class="text-base sm:text-lg text-stone-600 leading-relaxed font-normal mb-3">
+                    Натисни на кольорову пляму та подумай, із чим вона в тебе асоціюється. Яку історію міг би розповісти цей колір?
+                </p>
+                <p class="text-sm sm:text-base text-stone-500 italic font-medium">
+                    Тут немає неправильної відповіді. У кожного свій світ асоціацій!
+                </p>
+            </section>
+
+            <!-- 3. Художнє полотно з 6 великими акварельними плямами -->
+            <section aria-label="Акварельна палітра почуттів" class="w-full max-w-4xl my-auto">
+                <div id="palette-grid" class="grid grid-cols-2 md:grid-cols-3 gap-6 sm:gap-10 md:gap-12 items-center justify-items-center py-2 sm:py-4">
+                    <!-- Плями генеруються динамічно скриптом для чистоти та гнучкості -->
+                </div>
+            </section>
+
+            <!-- Делікатний статус-підказка внизу полотна (показує кількість власних історій, якщо дитина їх записала) -->
+            <div id="reflections-summary" class="mt-8 sm:mt-12 text-center transition-opacity duration-500 opacity-0 pointer-events-none">
+                <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 border border-stone-200/70 text-xs sm:text-sm text-stone-600 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="reflections-count-text">Твої власні асоціації збережено на палітрі</span>
+                </span>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 4. Модальна картка кольору та асоціацій -->
+    <div id="color-modal" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-stone-900/25 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="modal-color-title">
+        <!-- Клік по фону закриває модалку -->
+        <div id="modal-overlay-close" class="absolute inset-0"></div>
+
+        <div class="modal-card relative z-10 w-full max-w-xl max-h-[90vh] overflow-y-auto custom-scroll rounded-3xl bg-[#fffdf9] border border-stone-200/80 shadow-2xl p-6 sm:p-9 text-stone-800">
+            
+            <!-- М'який верхній акварельний градієнт у картці -->
+            <div id="modal-top-wash" class="absolute top-0 left-0 right-0 h-36 rounded-t-3xl pointer-events-none opacity-45 transition-colors duration-500"></div>
+
+            <!-- Кнопка закриття (хрестик у верхньому правому куті) -->
+            <button id="modal-close-x" type="button" aria-label="Закрити картку" class="relative z-20 float-right p-2.5 -mt-1 -mr-1 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100/80 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- Вміст картки -->
+            <div class="relative z-10 flex flex-col items-center text-center pt-1">
+                
+                <!-- Акварельний мазок цього кольору як художній акцент -->
+                <div id="modal-swatch-container" class="w-24 h-24 sm:w-28 sm:h-28 mb-3 flex items-center justify-center">
+                    <!-- Вставляється SVG обраної акварельної плями -->
+                </div>
+
+                <!-- Назва кольору та головні емоційні асоціації -->
+                <span id="modal-emotion-tag" class="inline-block px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide mb-2 bg-white/80 border border-stone-200/70 shadow-2xs">
+                    <!-- Наприклад: ніжність і любов -->
+                </span>
+
+                <h2 id="modal-color-title" class="font-serif-art text-3xl sm:text-4xl font-bold text-stone-800 mb-4">
+                    <!-- Назва кольору -->
+                </h2>
+
+                <!-- Точний поетичний текст пояснення -->
+                <p id="modal-poetic-text" class="text-base sm:text-lg text-stone-700 leading-relaxed max-w-md mb-3">
+                    <!-- Поетичний опис -->
+                </p>
+
+                <!-- Делікатна примітка про свободу фантазії -->
+                <p class="text-xs sm:text-sm text-stone-400 italic mb-6">
+                    Це лише одна з можливих історій, яку може розповісти цей колір.
+                </p>
+
+                <!-- Виділений блок із запитанням та полем для власної асоціації -->
+                <div class="w-full rounded-2xl bg-stone-50/90 border border-stone-200/80 p-4 sm:p-5 text-left mb-6 transition-all">
+                    <label for="personal-thought-input" class="block font-serif-art text-xl sm:text-2xl font-semibold text-stone-800 mb-1.5">
+                        А що цей колір означає саме для тебе?
+                    </label>
+                    <p class="text-xs sm:text-sm text-stone-500 mb-3">
+                        Пофантазуй: на що він схожий, який у нього настрій чи спогад? (За бажанням запиши сюди)
+                    </p>
+                    <textarea 
+                        id="personal-thought-input" 
+                        rows="2" 
+                        placeholder="Наприклад: мені він нагадує теплий чай після прогулянки або хмаринку..."
+                        class="w-full rounded-xl bg-white border border-stone-200 px-3.5 py-2.5 text-sm sm:text-base text-stone-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 transition-shadow resize-none"
+                    ></textarea>
+                    <div class="flex items-center justify-between mt-2.5">
+                        <span id="save-feedback" class="text-xs text-emerald-600 font-medium opacity-0 transition-opacity duration-300">
+                            ✓ Збережено у твоїй палітрі
+                        </span>
+                        <button id="save-thought-btn" type="button" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-100 border border-stone-200/90 shadow-2xs transition-all">
+                            Зберегти думку
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Кнопка повернення до палітри -->
+                <button id="modal-back-btn" type="button" class="w-full sm:w-auto px-7 py-3 rounded-full font-semibold text-sm sm:text-base text-stone-800 bg-white hover:bg-stone-50 border border-stone-300/90 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    <span>Повернутися до палітри</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Дані для 6 акварельних плям почуттів.
+         * Кожен об'єкт містить унікальну художню органічну форму (SVG path),
+         * налаштування багатошарових розводів, градієнтів та точні поетичні тексти.
+         */
+        const WATERCOLOR_BLOTS = [
+            {
+                id: 'pink',
+                name: 'Рожевий',
+                emotion: 'ніжність і любов',
+                description: 'Рожевий — ніжність і любов. Асоціюється з турботою, теплом, добротою та приємними моментами. Він ніби розповідає історію про обійми, дружбу та маленькі радощі.',
+                gradMain: 'url(#grad-pink-main)',
+                gradSub: 'url(#grad-pink-sub)',
+                filterId: 'url(#watercolor-edge-1)',
+                glowColor: 'rgba(244, 114, 182, 0.35)',
+                washBg: 'linear-gradient(180deg, rgba(255, 209, 224, 0.75) 0%, rgba(255, 253, 249, 0) 100%)',
+                tagTextClass: 'text-rose-700',
+                dotColor: '#f472b6',
+                breatheDuration: '9.5s',
+                breatheDelay: '0s',
+                // Органічна неправильна художня форма 1
+                pathMain: 'M102,28 C134,20 172,38 182,70 C193,104 176,144 148,166 C119,188 76,189 48,168 C21,147 13,108 24,75 C35,43 69,36 102,28 Z',
+                pathSub: 'M118,45 C148,48 175,75 168,108 C161,141 128,172 95,165 C62,158 38,125 46,92 C54,59 88,42 118,45 Z',
+                pathBloom: 'M74,34 C95,24 126,30 135,50 C144,70 124,96 100,98 C76,100 52,82 54,60 C56,42 60,40 74,34 Z'
+            },
+            {
+                id: 'yellow',
+                name: 'Жовтий',
+                emotion: 'радість і сонячне тепло',
+                description: 'Жовтий — радість і сонячне тепло. Нагадує про щасливі миті, усмішки, літо та надію. Це колір, який ніби запрошує радіти життю.',
+                gradMain: 'url(#grad-yellow-main)',
+                gradSub: 'url(#grad-yellow-sub)',
+                filterId: 'url(#watercolor-edge-2)',
+                glowColor: 'rgba(250, 204, 21, 0.38)',
+                washBg: 'linear-gradient(180deg, rgba(254, 240, 138, 0.75) 0%, rgba(255, 253, 249, 0) 100%)',
+                tagTextClass: 'text-amber-700',
+                dotColor: '#eab308',
+                breatheDuration: '10.2s',
+                breatheDelay: '-2.1s',
+                // Органічна неправильна художня форма 2
+                pathMain: 'M96,22 C131,19 164,45 178,78 C191,110 183,152 154,172 C125,191 81,184 51,163 C22,142 12,103 25,70 C38,37 62,25 96,22 Z',
+                pathSub: 'M84,48 C115,36 156,52 164,84 C172,116 146,156 114,164 C82,172 44,148 38,116 C32,84 53,60 84,48 Z',
+                pathBloom: 'M115,62 C138,58 162,76 158,100 C154,124 128,142 106,134 C84,126 76,98 86,78 C94,64 102,64 115,62 Z'
+            },
+            {
+                id: 'blue',
+                name: 'Блакитний',
+                emotion: 'спокій і мрійливість',
+                description: 'Блакитний — спокій і мрійливість. Нагадує чисте небо, тиху воду та безмежний простір для мрій. Він може розповісти історію про внутрішній спокій.',
+                gradMain: 'url(#grad-blue-main)',
+                gradSub: 'url(#grad-blue-sub)',
+                filterId: 'url(#watercolor-edge-3)',
+                glowColor: 'rgba(56, 189, 248, 0.35)',
+                washBg: 'linear-gradient(180deg, rgba(186, 230, 253, 0.78) 0%, rgba(255, 253, 249, 0) 100%)',
+                tagTextClass: 'text-sky-700',
+                dotColor: '#0ea5e9',
+                breatheDuration: '11s',
+                breatheDelay: '-4.5s',
+                // Органічна неправильна художня форма 3
+                pathMain: 'M105,26 C140,28 175,52 183,86 C191,120 168,158 136,174 C104,190 61,183 36,156 C12,129 15,84 36,56 C57,28 71,24 105,26 Z',
+                pathSub: 'M98,44 C132,42 166,68 164,102 C162,136 130,166 96,164 C62,162 34,132 38,98 C42,64 64,46 98,44 Z',
+                pathBloom: 'M62,74 C82,58 116,62 126,84 C136,106 118,136 94,138 C70,140 46,118 48,94 C50,82 52,82 62,74 Z'
+            },
+            {
+                id: 'green',
+                name: 'Зелений',
+                emotion: 'гармонія та надія',
+                description: 'Зелений — гармонія та надія. Асоціюється з природою, весною, оновленням і зростанням. Ніби розповідає про нові починання.',
+                gradMain: 'url(#grad-green-main)',
+                gradSub: 'url(#grad-green-sub)',
+                filterId: 'url(#watercolor-edge-1)',
+                glowColor: 'rgba(52, 211, 153, 0.35)',
+                washBg: 'linear-gradient(180deg, rgba(187, 247, 208, 0.78) 0%, rgba(255, 253, 249, 0) 100%)',
+                tagTextClass: 'text-emerald-700',
+                dotColor: '#10b981',
+                breatheDuration: '9.8s',
+                breatheDelay: '-1.4s',
+                // Органічна неправильна художня форма 4
+                pathMain: 'M92,24 C126,18 165,36 179,68 C193,100 181,143 153,167 C125,191 80,192 50,170 C20,148 11,105 24,71 C37,37 59,30 92,24 Z',
+                pathSub: 'M108,46 C140,50 168,80 162,112 C156,144 122,170 90,164 C58,158 34,126 42,94 C50,62 76,42 108,46 Z',
+                pathBloom: 'M86,52 C110,44 138,58 142,82 C146,106 124,132 100,132 C76,132 56,108 62,84 C66,68 74,56 86,52 Z'
+            },
+            {
+                id: 'purple',
+                name: 'Фіолетовий',
+                emotion: 'загадковість і фантазія',
+                description: 'Фіолетовий — загадковість і фантазія. Це колір мрій, таємниць, чарівних історій і незвичайних відкриттів.',
+                gradMain: 'url(#grad-purple-main)',
+                gradSub: 'url(#grad-purple-sub)',
+                filterId: 'url(#watercolor-edge-2)',
+                glowColor: 'rgba(139, 92, 246, 0.35)',
+                washBg: 'linear-gradient(180deg, rgba(221, 214, 254, 0.8) 0%, rgba(255, 253, 249, 0) 100%)',
+                tagTextClass: 'text-violet-700',
+                dotColor: '#8b5cf6',
+                breatheDuration: '10.6s',
+                breatheDelay: '-3.2s',
+                // Органічна неправильна художня форма 5
+                pathMain: 'M100,22 C136,22 170,46 181,80 C192,114 176,155 145,174 C114,193 69,187 41,162 C14,137 12,92 29,60 C46,28 65,22 100,22 Z',
+                pathSub: 'M88,46 C120,38 158,58 164,90 C170,122 144,160 112,166 C80,172 42,146 38,114 C34,82 56,54 88,46 Z',
+                pathBloom: 'M108,64 C132,62 154,82 148,106 C142,130 116,146 94,138 C72,130 64,102 76,82 C84,68 94,65 108,64 Z'
+            },
+            {
+                id: 'red',
+                name: 'Червоний',
+                emotion: 'енергія та пристрасть',
+                description: 'Червоний — енергія та пристрасть. Нагадує про сміливість, силу, захоплення та яскраві переживання.',
+                gradMain: 'url(#grad-red-main)',
+                gradSub: 'url(#grad-red-sub)',
+                filterId: 'url(#watercolor-edge-3)',
+                glowColor: 'rgba(244, 63, 94, 0.35)',
+                washBg: 'linear-gradient(180deg, rgba(254, 205, 211, 0.78) 0%, rgba(255, 253, 249, 0) 100%)',
+                tagTextClass: 'text-rose-700',
+                dotColor: '#e11d48',
+                breatheDuration: '8.9s',
+                breatheDelay: '-5.0s',
+                // Органічна неправильна художня форма 6
+                pathMain: 'M98,25 C133,21 169,43 181,76 C193,109 178,150 149,171 C120,192 75,188 46,165 C18,142 12,99 26,66 C40,33 64,29 98,25 Z',
+                pathSub: 'M106,44 C138,46 168,74 164,106 C160,138 128,168 96,164 C64,160 36,130 42,98 C48,66 74,42 106,44 Z',
+                pathBloom: 'M72,58 C94,48 124,58 130,80 C136,102 116,128 92,130 C68,132 48,110 52,86 C54,70 60,64 72,58 Z'
+            }
+        ];
+
+        // Сховище власних асоціацій користувача у межах сесії
+        const personalReflections = {};
+        let currentActiveColorId = null;
+
+        // Посилання на DOM-елементи
+        const paletteGrid = document.getElementById('palette-grid');
+        const colorModal = document.getElementById('color-modal');
+        const modalOverlayClose = document.getElementById('modal-overlay-close');
+        const modalCloseX = document.getElementById('modal-close-x');
+        const modalBackBtn = document.getElementById('modal-back-btn');
+        const modalTopWash = document.getElementById('modal-top-wash');
+        const modalSwatchContainer = document.getElementById('modal-swatch-container');
+        const modalEmotionTag = document.getElementById('modal-emotion-tag');
+        const modalColorTitle = document.getElementById('modal-color-title');
+        const modalPoeticText = document.getElementById('modal-poetic-text');
+        const personalThoughtInput = document.getElementById('personal-thought-input');
+        const saveThoughtBtn = document.getElementById('save-thought-btn');
+        const saveFeedback = document.getElementById('save-feedback');
+        const reflectionsSummary = document.getElementById('reflections-summary');
+        const reflectionsCountText = document.getElementById('reflections-count-text');
+
+        /**
+         * Генерує чистий SVG-код багатошарової акварельної плями
+         */
+        function createWatercolorSVG(blot, extraClasses = 'w-full h-full') {
+            return `
+                <svg viewBox="0 0 205 205" class="${extraClasses} overflow-visible pointer-events-none" aria-hidden="true">
+                    <g filter="${blot.filterId}">
+                        <!-- Перший широкий водянистий шар розтікання -->
+                        <path d="${blot.pathMain}" fill="${blot.gradMain}" />
+                        <!-- Другий насиченіший акварельний наплив -->
+                        <path d="${blot.pathSub}" fill="${blot.gradSub}" style="mix-blend-mode: multiply;" />
+                        <!-- Третій ніжний внутрішній відтінок -->
+                        <path d="${blot.pathBloom}" fill="${blot.gradMain}" opacity="0.65" />
+                    </g>
+                </svg>
+            `;
+        }
+
+        /**
+         * Відображає 6 великих художніх плям на полотні без зайвих написів поверх них
+         */
+        function renderPalette() {
+            paletteGrid.innerHTML = '';
+
+            WATERCOLOR_BLOTS.forEach((blot) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'watercolor-blot-btn group w-40 h-40 sm:w-52 sm:h-52 md:w-56 md:h-56 flex items-center justify-center p-2';
+                button.setAttribute('aria-label', `Дослідити колір: ${blot.name}`);
+                button.style.setProperty('--blot-glow', blot.glowColor);
+                button.style.setProperty('--breathe-duration', blot.breatheDuration);
+                button.style.setProperty('--breathe-delay', blot.breatheDelay);
+
+                // Перевірка, чи дитина вже додала власну асоціацію для цієї плями
+                const hasNote = Boolean(personalReflections[blot.id]);
+                const noteBadge = hasNote
+                    ? `<span title="Ти записав(ла) власну асоціацію для цього кольору" class="absolute bottom-3 right-3 w-3.5 h-3.5 rounded-full bg-white shadow-md flex items-center justify-center transition-transform duration-300 scale-100">
+                           <span class="w-2 h-2 rounded-full" style="background-color: ${blot.dotColor}"></span>
+                       </span>`
+                    : '';
+
+                button.innerHTML = `
+                    ${createWatercolorSVG(blot)}
+                    ${noteBadge}
+                `;
+
+                button.addEventListener('click', () => openColorModal(blot.id));
+                paletteGrid.appendChild(button);
+            });
+        }
+
+        /**
+         * Відкриває картку вибраного кольору з поетичним поясненням та полем для власної думки
+         */
+        function openColorModal(colorId) {
+            const blot = WATERCOLOR_BLOTS.find(item => item.id === colorId);
+            if (!blot) return;
+
+            currentActiveColorId = colorId;
+
+            // Заповнення візуальних та текстових елементів картки
+            modalTopWash.style.background = blot.washBg;
+            modalSwatchContainer.innerHTML = createWatercolorSVG(blot);
+            
+            modalEmotionTag.textContent = blot.emotion;
+            modalEmotionTag.className = `inline-block px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide mb-2 bg-white/90 border border-stone-200/80 shadow-2xs ${blot.tagTextClass}`;
+            
+            modalColorTitle.textContent = blot.name;
+            modalPoeticText.textContent = blot.description;
+
+            // Відновлення раніше введеної власної думки для цього кольору
+            personalThoughtInput.value = personalReflections[colorId] || '';
+            saveFeedback.classList.remove('opacity-100');
+            saveFeedback.classList.add('opacity-0');
+
+            // Відображення модального вікна
+            colorModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        /**
+         * Закриває картку та повертає до акварельної палітри
+         */
+        function closeColorModal() {
+            // Автоматично зберігаємо введений текст при закритті, якщо дитина його написала
+            saveCurrentThought(true);
+
+            colorModal.classList.remove('active');
+            document.body.style.overflow = '';
+            currentActiveColorId = null;
+        }
+
+        /**
+         * Зберігає власну асоціацію дитини у пам'яті та оновлює індикатор на палітрі
+         */
+        function saveCurrentThought(silent = false) {
+            if (!currentActiveColorId) return;
+
+            const text = personalThoughtInput.value.trim();
+            if (text) {
+                personalReflections[currentActiveColorId] = text;
+            } else {
+                delete personalReflections[currentActiveColorId];
+            }
+
+            renderPalette();
+            updateReflectionsSummary();
+
+            if (!silent && text) {
+                saveFeedback.classList.remove('opacity-0');
+                saveFeedback.classList.add('opacity-100');
+                setTimeout(() => {
+                    saveFeedback.classList.remove('opacity-100');
+                    saveFeedback.classList.add('opacity-0');
+                }, 2400);
+            }
+        }
+
+        /**
+         * Оновлює ніжний індикатор кількості створених дитиною історій внизу полотна
+         */
+        function updateReflectionsSummary() {
+            const count = Object.keys(personalReflections).length;
+            if (count > 0) {
+                reflectionsSummary.classList.remove('opacity-0', 'pointer-events-none');
+                reflectionsSummary.classList.add('opacity-100');
+                
+                let wordForm = 'історій';
+                if (count === 1) wordForm = 'власну історію';
+                else if (count >= 2 && count <= 4) wordForm = 'власні історії';
+
+                reflectionsCountText.textContent = `Ти створив(ла) ${count} ${wordForm} кольорів на цій палітрі`;
+            } else {
+                reflectionsSummary.classList.remove('opacity-100');
+                reflectionsSummary.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // Обробники подій
+        modalCloseX.addEventListener('click', closeColorModal);
+        modalBackBtn.addEventListener('click', closeColorModal);
+        modalOverlayClose.addEventListener('click', closeColorModal);
+        saveThoughtBtn.addEventListener('click', () => saveCurrentThought(false));
+
+        // Закриття картки клавішею Escape
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && colorModal.classList.contains('active')) {
+                closeColorModal();
+            }
+        });
+
+        // Ініціалізація палітри при завантаженні сторінки
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPalette();
+        });
+    </script>
+</body>
+</html>
